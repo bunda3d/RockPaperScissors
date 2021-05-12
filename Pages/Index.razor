@@ -1,44 +1,152 @@
 ﻿@page "/"
 @using System.Timers
-<h1>Rock, Paper, Scissors</h1>
+@using RockPaperScissors.Helpers
+@using System.IO
+@using System.Globalization
+@implements IDisposable
 
-<button class="btn btn-info m-3">Play Again</button>
+<h1>Paper, Rock, Scissors</h1>
 
-<div style="
-	display:flex; 
-	justify-content: center; 
-	margin-bottom: 2rem">
-	<img src="img/paper.jpg" class="image" />
+
+
+
+<div style="display:flex; justify-content: center; margin-bottom: 2rem">
+	@* img changes based on opponentHand value for Image *@
+	<img src="@opponentHand.Image" class="image" />
 </div>
 
-<div style="
-	display:flex; 
-	justify-content: space-around; 
-	margin-bottom: 2rem"
-	>
-	<img src="img/paper.jpg" class="image selectable-image" />
-	<img src="img/rock.jpg" class="image selectable-image" />
-	<img src="img/scissors.jpg" class="image selectable-image" />
+<div class="d-flex flex-row align-items-center justify-content-between mb-4">
+@* the hands list is below *@
+	@foreach (var hand in hands)
+	{
+		@* get the PRS file names w/out extension, capitalize them *@
+		var filename = Path.GetFileNameWithoutExtension(hand.Image);
+		string PRSname = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(filename);
+
+		@* onclick an image is selected *@
+		<div class="d-flex flex-column justify-content-center">
+			<img src="@hand.Image" class="image selectable-image align-self-center mb-3" 
+				@onclick="@(() => SelectHand(hand))"
+			/>
+			@* PRS names under their images *@
+			<p class="h4 align-self-center">
+				@PRSname
+			</p>
+		</div>
+
+	}
 </div>
 
 
+@* display result msgs up top, otherwise hidden *@
+@if (!string.IsNullOrEmpty(resultMessage))
+{
+	<div class="alert alert-@resultMessageColor d-flex align-items-center justify-content-between" role="alert">
+		<span class="h3 mb-0">@resultMessage</span>
+	
+		@if (!string.IsNullOrEmpty(resultMessageColor))
+		{
+			@* PlayAgain restarts timer and the PRS imgs moving *@
+			<button class="btn btn-info" @onclick="PlayAgain">
+				Play Again
+			</button>
+		}
+	</div>
+}
 
-<SurveyPrompt Title="How is Blazor working for you?" />
 
 @code{
+	List<Hand> hands = new List<Hand>()
+	{
+		new Hand
+		{
+			Selection = OptionRPS.Paper,
+			LosesAgainst = OptionRPS.Scissors,
+			WinsAgainst = OptionRPS.Rock,
+			Image = "img/paper.jpg"
+		},
+		new Hand
+		{
+			Selection = OptionRPS.Rock,
+			LosesAgainst = OptionRPS.Paper,
+			WinsAgainst = OptionRPS.Scissors,
+			Image = "img/rock.jpg"
+		},
+		new Hand
+		{
+			Selection = OptionRPS.Scissors,
+			LosesAgainst = OptionRPS.Rock,
+			WinsAgainst = OptionRPS.Paper,
+			Image = "img/scissors.jpg"
+		}
+	};
+
 	Timer timer;
+	Hand opponentHand;
+	string resultMessage = string.Empty;
+	string resultMessageColor = string.Empty;
 
 	protected override void OnInitialized()
 	{
-		//after 500ms timeronelapsed executed on intervals
+		opponentHand = hands[0];
+		//after XXXms timeronelapsed executed on intervals
 		timer = new Timer();
-		timer.Interval = 500;
+		timer.Interval = 150;
 		timer.Elapsed += TimerOnElapsed;
 		timer.Start();
 	}
 
+	//set hands index
+	int indexOpponentHand = 0;
+
 	private void TimerOnElapsed(object sender, ElapsedEventArgs e)
 	{
-		Console.WriteLine($"executed every {@timer.Interval.ToString()}");
+		//modulo operator (return remainder of division operation)
+		indexOpponentHand = (indexOpponentHand + 1) % hands.Count;
+		//opponentHand will be either 0, 1, or 2 after modulo operation
+		//hands[{index}] is updated to [indexOpponentHand]
+		opponentHand = hands[indexOpponentHand];
+		//let Blazor know change occurred (hands index), update component
+		StateHasChanged();
+
+		Console.WriteLine($"action executed every {@timer.Interval.ToString()}ms on Timer");
+	}
+
+	@* method to select a P, R, or S *@
+	private void SelectHand(Hand hand)
+	{
+		timer.Stop();
+		var result = hand.PlayAgainst(opponentHand);
+
+		if (result == GameStatus.Victory)
+		{
+			resultMessage = "You won!";
+			resultMessageColor = "success";
+		} 
+		else if (result == GameStatus.Loss)
+		{
+			resultMessage = "You Lost!";
+			resultMessageColor = "danger";
+		}
+		else
+		{
+			resultMessage = "It's a Draw!";
+			resultMessageColor = "info";
+		}
+	}
+
+	private void PlayAgain()
+	{
+		timer.Start();
+		resultMessage = string.Empty;
+	}
+
+	//dispose of timer method so it doesn't loop indefinitely
+	public void Dispose()
+	{
+		if (timer != null)
+		{
+			timer.Dispose();
+		}
 	}
 }
