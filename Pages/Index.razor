@@ -1,7 +1,44 @@
 ﻿@page "/"
+@using System.Timers
+<h1>Rock, Paper, Scissors</h1>
 
-<h1>Hello, world!</h1>
+<button class="btn btn-info m-3">Play Again</button>
 
-Welcome to your new app.
+<div style="
+	display:flex; 
+	justify-content: center; 
+	margin-bottom: 2rem">
+	<img src="img/paper.jpg" class="image" />
+</div>
+
+<div style="
+	display:flex; 
+	justify-content: space-around; 
+	margin-bottom: 2rem"
+	>
+	<img src="img/paper.jpg" class="image selectable-image" />
+	<img src="img/rock.jpg" class="image selectable-image" />
+	<img src="img/scissors.jpg" class="image selectable-image" />
+</div>
+
+
 
 <SurveyPrompt Title="How is Blazor working for you?" />
+
+@code{
+	Timer timer;
+
+	protected override void OnInitialized()
+	{
+		//after 500ms timeronelapsed executed on intervals
+		timer = new Timer();
+		timer.Interval = 500;
+		timer.Elapsed += TimerOnElapsed;
+		timer.Start();
+	}
+
+	private void TimerOnElapsed(object sender, ElapsedEventArgs e)
+	{
+		Console.WriteLine($"executed every {@timer.Interval.ToString()}");
+	}
+}
