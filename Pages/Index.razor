@@ -5,7 +5,7 @@
 @using System.Globalization
 @implements IDisposable
 
-<h1>Paper, Rock, Scissors</h1>
+<h1 class="mb-4">Paper, Rock, Scissors</h1>
 
 
 
@@ -33,24 +33,18 @@
 				@PRSname
 			</p>
 		</div>
-
 	}
 </div>
-
 
 @* display result msgs up top, otherwise hidden *@
 @if (!string.IsNullOrEmpty(resultMessage))
 {
 	<div class="alert alert-@resultMessageColor d-flex align-items-center justify-content-between" role="alert">
 		<span class="h3 mb-0">@resultMessage</span>
-	
-		@if (!string.IsNullOrEmpty(resultMessageColor))
-		{
-			@* PlayAgain restarts timer and the PRS imgs moving *@
-			<button class="btn btn-info" @onclick="PlayAgain">
-				Play Again
-			</button>
-		}
+		@* PlayAgain restarts timer and the PRS imgs moving *@
+		<button class="btn btn-info" @onclick="PlayAgain">
+			Play Again
+		</button>
 	</div>
 }
 
@@ -112,7 +106,7 @@
 		Console.WriteLine($"action executed every {@timer.Interval.ToString()}ms on Timer");
 	}
 
-	@* method to select a P, R, or S *@
+	@* method to select a P, R, or S & stop timer *@
 	private void SelectHand(Hand hand)
 	{
 		timer.Stop();
@@ -135,6 +129,7 @@
 		}
 	}
 
+	//method restarts the timer so game can be played again
 	private void PlayAgain()
 	{
 		timer.Start();
