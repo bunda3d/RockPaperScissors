@@ -1,0 +1,56 @@
+# workflow to publish Blazor WASM app to GitHub Pages
+name: Deploy Blazor WASM to GitHub Pages
+# environment variable & path to publish project to
+env:
+  PUBLISH_DIR: bin/Release/publish/wwwroot
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build-blazor-wasm-to-gh-pages:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      
+      # Sets up dotnet SDK and version
+      - name: Setup dotnet SDK
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.x'
+          
+      # publishes Release config (-c) of Blazor project
+      - name: Publish .NET Core Project
+        run: dotnet publish RockPaperScissor.csproj -c Release
+      
+      # rewrite module (index file must have base url tag, see more info:
+      # https://docs.microsoft.com/en-us/aspnet/core/blazor/host-and-deploy/webassembly?view=aspnetcore-5.0#github-pages
+      - name: Rewrite base href
+        uses: SteveSandersonMS/ghaction-rewrite-base-href@v1
+        with:
+          html_path: ${{ env.PUBLISH_DIR }}/index.html
+          base_href: /RockPaperScissors/
+
+      # Runs a single command using the runners shell
+      - name: Deploy to GitHub Pages
+        if: success()
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          target_branch: gh-pages
+          build_dir: public
+        env:
+          GITHUB_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+          
+          
